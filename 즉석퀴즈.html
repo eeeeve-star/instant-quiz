@@ -1,0 +1,1068 @@
+<title>즉석 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#e4eaef;
+    --surface:#ffffff;
+    --surface-muted:#eef2f6;
+    --ink:#1b2733;
+    --ink-muted:#5c6b79;
+    --border:#c9d3da;
+    --accent:#24437a;
+    --accent-strong:#17325c;
+    --accent-soft:#dce6f5;
+    --correct:#1f7a4d;
+    --correct-soft:#dff3e7;
+    --wrong:#b8342f;
+    --wrong-soft:#fbe3e1;
+    --easy:#2e8b57;
+    --medium:#c57f1d;
+    --hard:#b8342f;
+    --shadow:0 12px 32px rgba(23,37,58,0.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10161d;
+      --surface:#1a222b;
+      --surface-muted:#212b35;
+      --ink:#e7ecf1;
+      --ink-muted:#93a2af;
+      --border:#2e3944;
+      --accent:#6e9ee0;
+      --accent-strong:#8fb4ec;
+      --accent-soft:#1f3350;
+      --correct:#4fbe85;
+      --correct-soft:#163826;
+      --wrong:#e5726b;
+      --wrong-soft:#3a1d1c;
+      --easy:#4fbe85;
+      --medium:#e0a63e;
+      --hard:#e5726b;
+      --shadow:0 12px 32px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10161d;
+    --surface:#1a222b;
+    --surface-muted:#212b35;
+    --ink:#e7ecf1;
+    --ink-muted:#93a2af;
+    --border:#2e3944;
+    --accent:#6e9ee0;
+    --accent-strong:#8fb4ec;
+    --accent-soft:#1f3350;
+    --correct:#4fbe85;
+    --correct-soft:#163826;
+    --wrong:#e5726b;
+    --wrong-soft:#3a1d1c;
+    --easy:#4fbe85;
+    --medium:#e0a63e;
+    --hard:#e5726b;
+    --shadow:0 12px 32px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans KR", -apple-system, "Malgun Gothic", sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 48px;
+  }
+  .app{
+    width:100%;
+    max-width:440px;
+  }
+  .brand{
+    text-align:center;
+    margin-bottom:18px;
+  }
+  .brand h1{
+    font-family:"Gowun Batang", "Noto Serif KR", serif;
+    font-size:clamp(24px,6vw,30px);
+    margin:0 0 4px;
+    text-wrap:balance;
+  }
+  .brand p{
+    margin:0;
+    color:var(--ink-muted);
+    font-size:14px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    padding:24px 20px;
+  }
+  .screen{ }
+  .screen[hidden]{ display:none; }
+
+  label.field-label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-muted);
+    margin:0 0 8px;
+    letter-spacing:0.02em;
+  }
+  input[type="text"]{
+    width:100%;
+    font:inherit;
+    font-size:16px;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1.5px solid var(--border);
+    background:var(--surface-muted);
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type="text"]:focus-visible{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  input.shake{
+    animation:shake .32s ease;
+  }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-6px); }
+    75%{ transform:translateX(6px); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    input.shake{ animation:none; }
+  }
+
+  .diff-group{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin:14px 0 20px;
+  }
+  .diff-btn{
+    font:inherit;
+    font-size:14px;
+    font-weight:700;
+    padding:10px 4px;
+    border-radius:11px;
+    border:1.5px solid var(--border);
+    background:var(--surface-muted);
+    color:var(--ink-muted);
+    cursor:pointer;
+    transition:transform .1s ease, border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .diff-btn:active{ transform:scale(0.97); }
+  .diff-btn[data-selected="true"][data-level="쉬움"]{ border-color:var(--easy); color:var(--easy); background:color-mix(in srgb, var(--easy) 12%, var(--surface-muted)); }
+  .diff-btn[data-selected="true"][data-level="보통"]{ border-color:var(--medium); color:var(--medium); background:color-mix(in srgb, var(--medium) 12%, var(--surface-muted)); }
+  .diff-btn[data-selected="true"][data-level="어려움"]{ border-color:var(--hard); color:var(--hard); background:color-mix(in srgb, var(--hard) 12%, var(--surface-muted)); }
+
+  .primary-btn{
+    width:100%;
+    font:inherit;
+    font-size:16px;
+    font-weight:700;
+    padding:14px;
+    border-radius:13px;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease, opacity .15s ease;
+  }
+  .primary-btn:hover:not(:disabled){ background:var(--accent-strong); }
+  .primary-btn:active:not(:disabled){ transform:scale(0.98); }
+  .primary-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .primary-btn:focus-visible{ outline:3px solid var(--accent-soft); outline-offset:2px; }
+
+  .text-link{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:none;
+    border:none;
+    font:inherit;
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink-muted);
+    padding:12px 4px 2px;
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
+  .text-link:focus-visible{ outline:2px solid var(--accent-soft); border-radius:6px; }
+
+  .notice{
+    font-size:13px;
+    line-height:1.5;
+    padding:12px 14px;
+    border-radius:11px;
+    margin-bottom:16px;
+  }
+  .notice.warn{ background:var(--wrong-soft); color:var(--wrong); }
+  .notice[hidden]{ display:none; }
+
+  /* Loading screen */
+  .loading-wrap{
+    text-align:center;
+    padding:20px 4px 6px;
+  }
+  .spinner{
+    width:44px;height:44px;
+    margin:4px auto 18px;
+    border-radius:50%;
+    border:4px solid var(--surface-muted);
+    border-top-color:var(--accent);
+    animation:spin 0.9s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .spinner{ animation-duration:2.4s; }
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .loading-wrap h2{
+    font-family:"Gowun Batang", serif;
+    font-size:19px;
+    margin:0 0 6px;
+  }
+  .loading-wrap p{
+    color:var(--ink-muted);
+    font-size:13px;
+    margin:0 0 22px;
+  }
+
+  /* Quiz screen */
+  .progress-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .progress-count{
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .dots{
+    display:flex;
+    gap:6px;
+  }
+  .dot{
+    width:9px;height:9px;border-radius:50%;
+    border:1.5px solid var(--border);
+    background:transparent;
+  }
+  .dot[data-state="current"]{ border-color:var(--accent); background:var(--accent); }
+  .dot[data-state="correct"]{ border-color:var(--correct); background:var(--correct); }
+  .dot[data-state="wrong"]{ border-color:var(--wrong); background:var(--wrong); }
+
+  .question-text{
+    font-family:"Gowun Batang", serif;
+    font-size:clamp(18px,4.4vw,21px);
+    line-height:1.5;
+    margin:14px 0 18px;
+    text-wrap:balance;
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .option-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-align:left;
+    font:inherit;
+    font-size:15px;
+    padding:13px 14px;
+    border-radius:13px;
+    border:1.5px solid var(--border);
+    background:var(--surface-muted);
+    color:var(--ink);
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .option-btn:hover:not(:disabled){ border-color:var(--accent); }
+  .option-btn:focus-visible{ outline:3px solid var(--accent-soft); outline-offset:1px; }
+  .option-letter{
+    flex:none;
+    width:26px;height:26px;
+    border-radius:50%;
+    background:var(--surface);
+    border:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:var(--ink-muted);
+  }
+  .option-btn:disabled{ cursor:default; }
+  .option-btn[data-mark="correct"]{ border-color:var(--correct); background:var(--correct-soft); }
+  .option-btn[data-mark="correct"] .option-letter{ border-color:var(--correct); color:var(--correct); background:var(--surface); }
+  .option-btn[data-mark="wrong"]{ border-color:var(--wrong); background:var(--wrong-soft); }
+  .option-btn[data-mark="wrong"] .option-letter{ border-color:var(--wrong); color:var(--wrong); background:var(--surface); }
+  .option-btn[data-mark="dim"]{ opacity:0.55; }
+
+  .explain-box{
+    display:flex;
+    gap:9px;
+    align-items:flex-start;
+    font-size:13.5px;
+    line-height:1.55;
+    padding:12px 13px;
+    border-radius:12px;
+    background:var(--surface-muted);
+    color:var(--ink-muted);
+    margin:14px 0 4px;
+  }
+  .explain-box[hidden]{ display:none; }
+  .explain-tag{
+    flex:none;
+    font-weight:900;
+    font-size:12px;
+    padding:2px 8px;
+    border-radius:999px;
+  }
+  .explain-tag.correct{ background:var(--correct-soft); color:var(--correct); }
+  .explain-tag.wrong{ background:var(--wrong-soft); color:var(--wrong); }
+
+  .next-btn{
+    margin-top:16px;
+  }
+  .next-btn[hidden]{ display:none; }
+
+  /* Result screen */
+  .score-wrap{
+    text-align:center;
+    padding:6px 0 4px;
+  }
+  .score-wrap .topic-line{
+    font-size:13px;
+    color:var(--ink-muted);
+    margin:0 0 10px;
+  }
+  .score-num{
+    font-family:"Gowun Batang", serif;
+    font-size:52px;
+    font-variant-numeric:tabular-nums;
+    color:var(--accent);
+    margin:0;
+    line-height:1;
+  }
+  .score-label{
+    font-size:14px;
+    color:var(--ink-muted);
+    margin:6px 0 20px;
+  }
+  .review-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin:4px 0 20px;
+  }
+  .review-item{
+    border:1.5px solid var(--border);
+    border-radius:13px;
+    padding:13px 14px;
+  }
+  .review-head{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    font-size:14.5px;
+    font-weight:700;
+    margin-bottom:8px;
+    line-height:1.4;
+  }
+  .review-mark{
+    flex:none;
+    width:20px;height:20px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:900;color:#fff;
+    margin-top:1px;
+  }
+  .review-mark.correct{ background:var(--correct); }
+  .review-mark.wrong{ background:var(--wrong); }
+  .review-answer{
+    font-size:13px;
+    color:var(--ink-muted);
+    margin:0 0 6px;
+  }
+  .review-answer b{ color:var(--ink); font-weight:700; }
+  .review-explain{
+    font-size:13px;
+    line-height:1.5;
+    color:var(--ink-muted);
+    margin:0;
+    padding-top:8px;
+    border-top:1px dashed var(--border);
+  }
+
+  .footer-note{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--ink-muted);
+    margin-top:16px;
+    opacity:0.8;
+  }
+
+  .secondary-btn{
+    width:100%;
+    font:inherit;
+    font-size:15px;
+    font-weight:700;
+    padding:12px;
+    border-radius:13px;
+    border:1.5px solid var(--accent);
+    background:transparent;
+    color:var(--accent);
+    cursor:pointer;
+    margin-bottom:10px;
+    transition:background .15s ease, transform .1s ease, opacity .15s ease;
+  }
+  .secondary-btn:hover:not(:disabled){ background:var(--accent-soft); }
+  .secondary-btn:active:not(:disabled){ transform:scale(0.98); }
+  .secondary-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+  .secondary-btn[hidden]{ display:none; }
+
+  /* 오답노트 화면 */
+  .notes-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .icon-btn{
+    flex:none;
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1.5px solid var(--border);
+    background:var(--surface-muted);
+    color:var(--ink);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:focus-visible{ outline:3px solid var(--accent-soft); }
+  .notes-header h2{
+    flex:1;
+    font-family:"Gowun Batang", serif;
+    font-size:19px;
+    margin:0;
+  }
+  .clear-link{
+    flex:none;
+    background:none;
+    border:none;
+    font:inherit;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--wrong);
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:3px;
+    padding:4px 0;
+  }
+  .clear-link[hidden]{ display:none; }
+  .notes-empty{
+    text-align:center;
+    color:var(--ink-muted);
+    font-size:13.5px;
+    padding:32px 8px;
+    line-height:1.6;
+  }
+  .notes-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .note-item{
+    border:1.5px solid var(--border);
+    border-radius:13px;
+    padding:13px 14px;
+  }
+  .note-meta{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .note-tag{
+    font-size:11.5px;
+    font-weight:900;
+    padding:2px 8px;
+    border-radius:999px;
+    background:var(--surface-muted);
+  }
+  .note-date{
+    flex:1;
+    font-size:11.5px;
+    color:var(--ink-muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .note-del{
+    flex:none;
+    background:none;
+    border:none;
+    color:var(--ink-muted);
+    font-size:15px;
+    line-height:1;
+    cursor:pointer;
+    padding:2px 4px;
+  }
+  .note-del:hover{ color:var(--wrong); }
+  .note-question{
+    font-size:14.5px;
+    font-weight:700;
+    line-height:1.45;
+    margin:0 0 6px;
+  }
+  .note-answer{
+    font-size:13px;
+    color:var(--ink-muted);
+    margin:0 0 6px;
+  }
+  .note-answer b{ color:var(--ink); font-weight:700; }
+  .note-explain{
+    font-size:13px;
+    line-height:1.5;
+    color:var(--ink-muted);
+    margin:0;
+    padding-top:8px;
+    border-top:1px dashed var(--border);
+  }
+</style>
+
+<div class="app">
+  <div class="brand">
+    <h1>즉석 퀴즈</h1>
+    <p>주제와 난이도만 정하면, 그 자리에서 문제를 만들어드려요</p>
+  </div>
+
+  <div class="card">
+
+    <!-- 1) 입력 화면 -->
+    <section id="screen-start" class="screen">
+      <div id="notice-start" class="notice warn" hidden></div>
+
+      <label class="field-label" for="topic-input">주제</label>
+      <input id="topic-input" type="text" placeholder="예: 광합성, 세계사, 자바스크립트" maxlength="60" autocomplete="off">
+
+      <label class="field-label" style="margin-top:18px;">난이도</label>
+      <div class="diff-group" id="diff-group">
+        <button type="button" class="diff-btn" data-level="쉬움">쉬움</button>
+        <button type="button" class="diff-btn" data-level="보통" data-selected="true">보통</button>
+        <button type="button" class="diff-btn" data-level="어려움">어려움</button>
+      </div>
+
+      <button type="button" id="gen-btn" class="primary-btn" disabled>준비 중...</button>
+      <button type="button" id="notes-link" class="text-link" hidden>오답노트 보기</button>
+    </section>
+
+    <!-- 2) 로딩 화면 -->
+    <section id="screen-loading" class="screen" hidden>
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <h2>문제를 만드는 중이에요</h2>
+        <p id="loading-topic"></p>
+        <button type="button" id="cancel-btn" class="text-link">취소</button>
+      </div>
+    </section>
+
+    <!-- 3) 퀴즈 풀이 화면 -->
+    <section id="screen-quiz" class="screen" hidden>
+      <div class="progress-row">
+        <span class="progress-count" id="progress-count">문항 1/5</span>
+        <div class="dots" id="dots"></div>
+      </div>
+      <p class="question-text" id="question-text"></p>
+      <div class="options" id="options"></div>
+      <div class="explain-box" id="explain-box" hidden>
+        <span class="explain-tag" id="explain-tag"></span>
+        <span id="explain-text"></span>
+      </div>
+      <button type="button" id="next-btn" class="primary-btn next-btn" hidden>다음 문제</button>
+    </section>
+
+    <!-- 4) 결과 화면 -->
+    <section id="screen-result" class="screen" hidden>
+      <div class="score-wrap">
+        <p class="topic-line" id="result-topic"></p>
+        <p class="score-num"><span id="score-num">0</span><span style="font-size:22px;">/5</span></p>
+        <p class="score-label" id="score-label"></p>
+      </div>
+      <div class="review-list" id="review-list"></div>
+      <button type="button" id="save-notes-btn" class="secondary-btn" hidden>오답노트에 저장</button>
+      <button type="button" id="retry-btn" class="primary-btn">다시 풀기</button>
+      <button type="button" id="restart-btn" class="text-link">다른 주제로 도전하기</button>
+    </section>
+
+    <!-- 5) 오답노트 화면 -->
+    <section id="screen-notes" class="screen" hidden>
+      <div class="notes-header">
+        <button type="button" id="notes-back-btn" class="icon-btn" aria-label="뒤로">←</button>
+        <h2>오답노트</h2>
+        <button type="button" id="notes-clear-btn" class="clear-link" hidden>모두 지우기</button>
+      </div>
+      <div id="notes-list"></div>
+    </section>
+
+  </div>
+  <p class="footer-note">문제는 Claude가 그 자리에서 생성하며, 실제와 다를 수 있어요.</p>
+</div>
+
+<script>
+(function(){
+  var topicInput = document.getElementById('topic-input');
+  var diffGroup = document.getElementById('diff-group');
+  var genBtn = document.getElementById('gen-btn');
+  var noticeStart = document.getElementById('notice-start');
+  var cancelBtn = document.getElementById('cancel-btn');
+  var loadingTopic = document.getElementById('loading-topic');
+  var progressCount = document.getElementById('progress-count');
+  var dotsEl = document.getElementById('dots');
+  var questionText = document.getElementById('question-text');
+  var optionsEl = document.getElementById('options');
+  var explainBox = document.getElementById('explain-box');
+  var explainTag = document.getElementById('explain-tag');
+  var explainText = document.getElementById('explain-text');
+  var nextBtn = document.getElementById('next-btn');
+  var resultTopic = document.getElementById('result-topic');
+  var scoreNum = document.getElementById('score-num');
+  var scoreLabel = document.getElementById('score-label');
+  var reviewList = document.getElementById('review-list');
+  var retryBtn = document.getElementById('retry-btn');
+  var restartBtn = document.getElementById('restart-btn');
+  var notesLink = document.getElementById('notes-link');
+  var saveNotesBtn = document.getElementById('save-notes-btn');
+  var notesBackBtn = document.getElementById('notes-back-btn');
+  var notesClearBtn = document.getElementById('notes-clear-btn');
+  var notesListEl = document.getElementById('notes-list');
+
+  var screens = {
+    start: document.getElementById('screen-start'),
+    loading: document.getElementById('screen-loading'),
+    quiz: document.getElementById('screen-quiz'),
+    result: document.getElementById('screen-result'),
+    notes: document.getElementById('screen-notes')
+  };
+
+  var sampleFn = null;
+  var dbApi = null;
+  var notesUnsub = null;
+  var currentTopic = '';
+  var currentDifficulty = '보통';
+  var questions = [];
+  var userAnswers = [];
+  var currentIndex = 0;
+  var score = 0;
+  var abortController = null;
+
+  function showScreen(name){
+    if (name !== 'notes' && notesUnsub){
+      notesUnsub();
+      notesUnsub = null;
+    }
+    Object.keys(screens).forEach(function(k){
+      screens[k].hidden = (k !== name);
+    });
+  }
+
+  function shake(el){
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+  }
+
+  // --- 난이도 선택 ---
+  diffGroup.addEventListener('click', function(e){
+    var btn = e.target.closest('.diff-btn');
+    if (!btn) return;
+    Array.prototype.forEach.call(diffGroup.querySelectorAll('.diff-btn'), function(b){
+      b.removeAttribute('data-selected');
+    });
+    btn.setAttribute('data-selected', 'true');
+    currentDifficulty = btn.dataset.level;
+  });
+
+  // --- Claude sample capability 준비 ---
+  (async function initSample(){
+    try{
+      if (window.claude && typeof window.claude.use === 'function'){
+        sampleFn = await window.claude.use('sample');
+      }
+    }catch(e){
+      sampleFn = null;
+    }
+    if (sampleFn){
+      genBtn.disabled = false;
+      genBtn.textContent = '퀴즈 만들기';
+    } else {
+      genBtn.textContent = '사용할 수 없음';
+      noticeStart.textContent = '이 화면은 Claude 앱(claude.ai) 안에서 열어야 퀴즈를 만들 수 있어요.';
+      noticeStart.hidden = false;
+    }
+  })();
+
+  // --- db capability 준비 (오답노트) ---
+  (async function initDb(){
+    try{
+      if (window.claude && typeof window.claude.use === 'function'){
+        dbApi = await window.claude.use('db');
+      }
+    }catch(e){
+      dbApi = null;
+    }
+    notesLink.hidden = !dbApi;
+  })();
+
+  function notesCollection(){
+    return dbApi.collection('wrongNotes');
+  }
+
+  var DIFF_VAR = { '쉬움': '--easy', '보통': '--medium', '어려움': '--hard' };
+
+  function formatDate(iso){
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mi = String(d.getMinutes()).padStart(2, '0');
+    return d.getFullYear() + '.' + mm + '.' + dd + ' ' + hh + ':' + mi;
+  }
+
+  async function saveWrongNotes(){
+    if (!dbApi) return;
+    var wrongs = [];
+    questions.forEach(function(q, i){
+      if (userAnswers[i] !== q.answerIndex){
+        wrongs.push({ q: q, userAnswerIndex: userAnswers[i] });
+      }
+    });
+    if (wrongs.length === 0) return;
+    saveNotesBtn.disabled = true;
+    saveNotesBtn.textContent = '저장 중...';
+    try{
+      await Promise.all(wrongs.map(function(w){
+        return notesCollection().add({
+          topic: currentTopic,
+          difficulty: currentDifficulty,
+          question: w.q.question,
+          options: w.q.options,
+          answerIndex: w.q.answerIndex,
+          userAnswerIndex: w.userAnswerIndex,
+          explanation: w.q.explanation,
+          createdAt: new Date().toISOString()
+        });
+      }));
+      saveNotesBtn.textContent = '오답노트에 저장됨 (' + wrongs.length + '개) ✓';
+    }catch(e){
+      saveNotesBtn.disabled = false;
+      saveNotesBtn.textContent = '오답노트에 저장';
+    }
+  }
+
+  function noteItemHtml(id, data){
+    var letters = ['A','B','C','D'];
+    var diffVar = DIFF_VAR[data.difficulty] || '--accent';
+    var userText = (typeof data.userAnswerIndex === 'number' && data.options[data.userAnswerIndex])
+      ? letters[data.userAnswerIndex] + '. ' + escapeHtml(data.options[data.userAnswerIndex])
+      : '-';
+    var correctText = letters[data.answerIndex] + '. ' + escapeHtml(data.options[data.answerIndex]);
+    return '' +
+      '<div class="note-item" data-id="' + id + '">' +
+        '<div class="note-meta">' +
+          '<span class="note-tag" style="color:var(' + diffVar + ')">' + escapeHtml(data.topic) + ' · ' + escapeHtml(data.difficulty) + '</span>' +
+          '<span class="note-date">' + formatDate(data.createdAt) + '</span>' +
+          '<button type="button" class="note-del" aria-label="삭제" data-id="' + id + '">✕</button>' +
+        '</div>' +
+        '<p class="note-question">' + escapeHtml(data.question) + '</p>' +
+        '<p class="note-answer">내 답: <b>' + userText + '</b> · 정답: <b>' + correctText + '</b></p>' +
+        '<p class="note-explain">' + escapeHtml(data.explanation) + '</p>' +
+      '</div>';
+  }
+
+  function renderNotes(docs){
+    notesClearBtn.hidden = docs.length === 0;
+    if (docs.length === 0){
+      notesListEl.innerHTML = '<p class="notes-empty">저장된 오답이 없어요.<br>퀴즈를 풀고 결과 화면에서 저장해보세요.</p>';
+      return;
+    }
+    var html = '<div class="notes-list">';
+    docs.forEach(function(snap){
+      var d = snap.data();
+      if (!d) return;
+      html += noteItemHtml(snap.id, d);
+    });
+    html += '</div>';
+    notesListEl.innerHTML = html;
+  }
+
+  function openNotes(){
+    if (!dbApi) return;
+    showScreen('notes');
+    notesListEl.innerHTML = '<p class="notes-empty">불러오는 중...</p>';
+    notesClearBtn.hidden = true;
+    notesUnsub = notesCollection().orderBy('createdAt', 'desc').limit(200).onSnapshot(
+      function(snap){ renderNotes(snap.docs); },
+      function(e){ notesListEl.innerHTML = '<p class="notes-empty">오답노트를 불러오지 못했어요.</p>'; }
+    );
+  }
+
+  notesListEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.note-del');
+    if (!btn || !dbApi) return;
+    var id = btn.dataset.id;
+    btn.disabled = true;
+    notesCollection().doc(id).delete().catch(function(){ btn.disabled = false; });
+  });
+
+  notesClearBtn.addEventListener('click', async function(){
+    if (!dbApi) return;
+    notesClearBtn.disabled = true;
+    try{
+      var snap = await notesCollection().limit(200).get();
+      await Promise.all(snap.docs.map(function(d){ return notesCollection().doc(d.id).delete(); }));
+    }catch(e){}
+    notesClearBtn.disabled = false;
+  });
+
+  notesLink.addEventListener('click', openNotes);
+  notesBackBtn.addEventListener('click', function(){ showScreen('start'); });
+  saveNotesBtn.addEventListener('click', saveWrongNotes);
+
+  function buildPrompt(topic, difficulty){
+    return [
+      '당신은 한국어 퀴즈 출제 전문가입니다.',
+      '주제: "' + topic + '"',
+      '난이도: ' + difficulty + ' (쉬움/보통/어려움 중 하나이며, 문제의 개념 난이도와 보기 구성을 그 수준에 맞추세요)',
+      '',
+      '위 주제로 4지선다 객관식 문제를 정확히 5개 만들어주세요. 조건:',
+      '- 각 문제는 보기를 정확히 4개 제시하고, 정답은 그중 하나뿐이어야 합니다.',
+      '- 오답 보기도 그럴듯하지만 명백히 틀린 내용이어야 하며, 서로 겹치거나 모호하지 않아야 합니다.',
+      '- 각 문제마다 정답의 근거를 설명하는 한 문장짜리 해설을 포함하세요.',
+      '- 문제, 보기, 해설은 모두 자연스러운 한국어로 작성하세요.',
+      '- 아래 형식의 JSON 배열만 출력하고, 다른 설명이나 코드블록 표시는 넣지 마세요.',
+      '',
+      '[{"question":"문제 내용","options":["보기1","보기2","보기3","보기4"],"answerIndex":0,"explanation":"한 문장 해설"}]'
+    ].join('\n');
+  }
+
+  function normalizeQuestion(q){
+    if (!q || typeof q.question !== 'string') return null;
+    if (!Array.isArray(q.options) || q.options.length !== 4) return null;
+    if (!q.options.every(function(o){ return typeof o === 'string' && o.trim(); })) return null;
+    var idx = Number(q.answerIndex);
+    if (!Number.isInteger(idx) || idx < 0 || idx > 3) return null;
+    if (typeof q.explanation !== 'string' || !q.explanation.trim()) return null;
+    return {
+      question: q.question.trim(),
+      options: q.options.map(function(o){ return o.trim(); }),
+      answerIndex: idx,
+      explanation: q.explanation.trim()
+    };
+  }
+
+  function errorMessage(e){
+    var code = e && e.code;
+    switch(code){
+      case 'cancelled': return null;
+      case 'not_granted':
+      case 'sampling_disabled':
+      case 'not_declared':
+      case 'capability_disabled':
+      case 'capability_removed':
+        return '이 아티팩트에서 Claude를 사용할 권한이 없어요.';
+      case 'rate_limited':
+        return '요청이 많아요. 잠시 후 다시 시도해주세요.';
+      case 'prompt_too_large':
+        return '주제를 조금 더 짧게 입력해주세요.';
+      case 'refused':
+        return '이 주제로는 문제를 만들 수 없어요. 다른 주제를 입력해주세요.';
+      case 'invalid_json':
+        return '문제를 만드는 데 실패했어요. 다시 시도해주세요.';
+      default:
+        return '일시적인 오류가 발생했어요. 다시 시도해주세요.';
+    }
+  }
+
+  async function runGeneration(topic, difficulty){
+    currentTopic = topic;
+    currentDifficulty = difficulty;
+    showScreen('loading');
+    loadingTopic.textContent = topic + ' · ' + difficulty;
+    abortController = new AbortController();
+    noticeStart.hidden = true;
+    try{
+      var data = await sampleFn.json(buildPrompt(topic, difficulty), {
+        modelTier: 'default',
+        cache: false,
+        signal: abortController.signal
+      });
+      var list = Array.isArray(data) ? data : [];
+      questions = list.map(normalizeQuestion).filter(Boolean).slice(0, 5);
+      if (questions.length === 0){ throw { code: 'invalid_json' }; }
+      userAnswers = new Array(questions.length).fill(null);
+      currentIndex = 0;
+      score = 0;
+      showScreen('quiz');
+      renderQuestion();
+    }catch(e){
+      var msg = errorMessage(e);
+      showScreen('start');
+      if (msg){
+        noticeStart.textContent = msg;
+        noticeStart.hidden = false;
+      }
+    }
+  }
+
+  genBtn.addEventListener('click', function(){
+    var topic = topicInput.value.trim();
+    if (!topic){
+      shake(topicInput);
+      topicInput.focus();
+      return;
+    }
+    if (!sampleFn) return;
+    runGeneration(topic, currentDifficulty);
+  });
+
+  cancelBtn.addEventListener('click', function(){
+    if (abortController) abortController.abort();
+    showScreen('start');
+  });
+
+  function renderDots(){
+    dotsEl.innerHTML = '';
+    questions.forEach(function(_, i){
+      var d = document.createElement('span');
+      d.className = 'dot';
+      if (userAnswers[i] !== null){
+        d.setAttribute('data-state', userAnswers[i] === questions[i].answerIndex ? 'correct' : 'wrong');
+      } else if (i === currentIndex){
+        d.setAttribute('data-state', 'current');
+      }
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function renderQuestion(){
+    var q = questions[currentIndex];
+    progressCount.textContent = '문항 ' + (currentIndex + 1) + '/' + questions.length;
+    renderDots();
+    questionText.textContent = q.question;
+    explainBox.hidden = true;
+    nextBtn.hidden = true;
+
+    optionsEl.innerHTML = '';
+    var letters = ['A','B','C','D'];
+    q.options.forEach(function(optText, i){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'option-btn';
+      btn.innerHTML = '<span class="option-letter">' + letters[i] + '</span><span>' + escapeHtml(optText) + '</span>';
+      btn.addEventListener('click', function(){ selectOption(i); });
+      optionsEl.appendChild(btn);
+    });
+  }
+
+  function escapeHtml(s){
+    var div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function selectOption(i){
+    if (userAnswers[currentIndex] !== null) return;
+    var q = questions[currentIndex];
+    userAnswers[currentIndex] = i;
+    var correct = i === q.answerIndex;
+    if (correct) score++;
+
+    var btns = optionsEl.querySelectorAll('.option-btn');
+    Array.prototype.forEach.call(btns, function(btn, idx){
+      btn.disabled = true;
+      if (idx === q.answerIndex){
+        btn.setAttribute('data-mark', 'correct');
+      } else if (idx === i){
+        btn.setAttribute('data-mark', 'wrong');
+      } else {
+        btn.setAttribute('data-mark', 'dim');
+      }
+    });
+
+    explainTag.textContent = correct ? '정답' : '오답';
+    explainTag.className = 'explain-tag ' + (correct ? 'correct' : 'wrong');
+    explainText.textContent = q.explanation;
+    explainBox.hidden = false;
+
+    renderDots();
+    nextBtn.hidden = false;
+    nextBtn.textContent = (currentIndex === questions.length - 1) ? '결과 보기' : '다음 문제';
+  }
+
+  nextBtn.addEventListener('click', function(){
+    currentIndex++;
+    if (currentIndex >= questions.length){
+      showResult();
+    } else {
+      renderQuestion();
+    }
+  });
+
+  function showResult(){
+    showScreen('result');
+    resultTopic.textContent = currentTopic + ' · ' + currentDifficulty;
+    scoreNum.textContent = String(score);
+    var pct = Math.round((score / questions.length) * 100);
+    var comment;
+    if (pct === 100) comment = '완벽해요! 만점입니다.';
+    else if (pct >= 60) comment = '잘했어요, 조금만 더 다듬어봐요.';
+    else comment = '다시 풀며 개념을 확인해봐요.';
+    scoreLabel.textContent = pct + '점 · ' + comment;
+
+    reviewList.innerHTML = '';
+    var letters = ['A','B','C','D'];
+    questions.forEach(function(q, i){
+      var ua = userAnswers[i];
+      var isCorrect = ua === q.answerIndex;
+      var item = document.createElement('div');
+      item.className = 'review-item';
+      item.innerHTML =
+        '<div class="review-head">' +
+          '<span class="review-mark ' + (isCorrect ? 'correct' : 'wrong') + '">' + (isCorrect ? '✓' : '✕') + '</span>' +
+          '<span>' + (i + 1) + '. ' + escapeHtml(q.question) + '</span>' +
+        '</div>' +
+        '<p class="review-answer">내 답: <b>' + (ua === null ? '-' : letters[ua] + '. ' + escapeHtml(q.options[ua])) + '</b>' +
+          (isCorrect ? '' : ' &nbsp;·&nbsp; 정답: <b>' + letters[q.answerIndex] + '. ' + escapeHtml(q.options[q.answerIndex]) + '</b>') +
+        '</p>' +
+        '<p class="review-explain">' + escapeHtml(q.explanation) + '</p>';
+      reviewList.appendChild(item);
+    });
+
+    var wrongCount = questions.filter(function(q, i){ return userAnswers[i] !== q.answerIndex; }).length;
+    saveNotesBtn.hidden = !dbApi || wrongCount === 0;
+    saveNotesBtn.disabled = false;
+    saveNotesBtn.textContent = '오답노트에 저장';
+  }
+
+  retryBtn.addEventListener('click', function(){
+    if (!sampleFn) return;
+    runGeneration(currentTopic, currentDifficulty);
+  });
+
+  restartBtn.addEventListener('click', function(){
+    topicInput.value = currentTopic;
+    showScreen('start');
+  });
+
+})();
+</script>
